@@ -6,7 +6,7 @@
 /*   By: rluiz <rluiz@student.42lehavre.fr>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/10 23:08:27 by rluiz             #+#    #+#             */
-/*   Updated: 2023/11/13 18:20:29 by rluiz            ###   ########.fr       */
+/*   Updated: 2023/11/13 18:55:53 by rluiz            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ int	life_helper(t_philo *philo2)
 		pthread_mutex_lock(&(philo2->right_fork->fork));
 		ft_printf(philo2->table, "%d ms %d has taken a fork\n",
 			get_time_ms(philo2->table), philo2->id);
-		usleep(philo2->table->time_to_die);
+		usleep(philo2->table->time_to_die * 1000);
 		check_death(philo2);
 	}
 	check_death(philo2);
@@ -29,7 +29,7 @@ int	life_helper(t_philo *philo2)
 	ft_printf(philo2->table, "%d ms %d is sleeping\n",
 		get_time_ms(philo2->table), philo2->id);
 	check_death(philo2);
-	usleep(philo2->table->time_to_sleep);
+	usleep(philo2->table->time_to_sleep * 1000);
 	ft_printf(philo2->table, "%d ms %d is thinking\n",
 		get_time_ms(philo2->table), philo2->id);
 	check_death(philo2);
@@ -41,21 +41,21 @@ void	*philo_life(void *philo)
 	t_philo	*philo2;
 
 	philo2 = (t_philo *)philo;
-	while (!philo2->table->philos_dead && !philo2->full)
+	while (!philo2->table->philos_dead && !philo2->full && check_death(philo2))
 	{
 		if (philo2->table->number_of_philosopher == 1)
 		{
 			pthread_mutex_lock(&(philo2->right_fork->fork));
 			ft_printf(philo2->table, "%d ms %d has taken a fork\n",
 				get_time_ms(philo2->table), philo2->id);
-			usleep(philo2->table->time_to_die);
+			usleep(philo2->table->time_to_die * 1000);
 		}
 		philo_eat(philo2);
 		if (philo2->full)
 			break ;
 		ft_printf(philo2->table, "%d ms %d is sleeping\n",
 			get_time_ms(philo2->table), philo2->id);
-		usleep(philo2->table->time_to_sleep);
+		usleep(philo2->table->time_to_sleep * 1000);
 		ft_printf(philo2->table, "%d ms %d is thinking\n",
 			get_time_ms(philo2->table), philo2->id);
 	}

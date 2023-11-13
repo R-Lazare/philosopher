@@ -6,7 +6,7 @@
 /*   By: rluiz <rluiz@student.42lehavre.fr>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/03 16:52:58 by rluiz             #+#    #+#             */
-/*   Updated: 2023/11/13 18:19:17 by rluiz            ###   ########.fr       */
+/*   Updated: 2023/11/13 18:57:04 by rluiz            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,8 @@ t_table	*parse(t_arena *arena, int argc, char **argv)
 
 int	check_death(t_philo *philo2)
 {
+	if (philo2->full)
+		return (0);
 	pthread_mutex_lock(philo2->table->table_lock);
 	if (philo2->table->philos_dead)
 	{
@@ -67,7 +69,6 @@ int	check_death(t_philo *philo2)
 
 void	lock_fork(t_philo *philo2)
 {
-	check_death(philo2);
 	if (philo2->id % 2 == 0)
 	{
 		pthread_mutex_lock(&(philo2->right_fork->fork));
@@ -82,8 +83,17 @@ void	lock_fork(t_philo *philo2)
 	philo2->is_eating = 1;
 	ft_printf(philo2->table, "%d ms %d is eating\n", get_time_ms(philo2->table),
 		philo2->id);
+	if (get_time_ms(philo2->table) - philo2->last_meal_time > philo2->table->time_to_die)
+	{
+		ft_printf(philo2->table, "%d ms %d died\n", get_time_ms(philo2->table),
+		philo2->id);
+		philo2->table->philos_dead = 1;
+		pthread_mutex_unlock(&(philo2->right_fork->fork));
+		pthread_mutex_unlock(&(philo2->left_fork->fork));
+		pthread_exit(NULL);
+	}
 	philo2->last_meal_time = get_time_ms(philo2->table);
-	usleep(philo2->table->time_to_eat);
+	usleep(philo2->table->time_to_eat * 1000);
 }
 
 void	philo_eat(t_philo *philo2)
@@ -94,6 +104,8 @@ void	philo_eat(t_philo *philo2)
 	lock_fork(philo2);
 	pthread_mutex_unlock(&(philo2->right_fork->fork));
 	pthread_mutex_unlock(&(philo2->left_fork->fork));
+	if (philo2->table->philos_dead)
+		pthread_exit(NULL);
 	philo2->is_eating = 0;
 	philo2->meals_counter++;
 	if (i == philo2->meals_counter)
@@ -117,8 +129,7 @@ int	main(int argc, char **argv)
 	while(check_death(table->philos + i))
 	{
 		i++;
-		if (i == table->number_of_philosopher)
-			i = 0;
+		if (i == table->number_of_philosopher) i = 0;
 	}
 	i = -1;
 	while (++i < table->number_of_philosopher)
